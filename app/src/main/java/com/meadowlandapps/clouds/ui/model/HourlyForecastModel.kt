@@ -1,15 +1,15 @@
 package com.meadowlandapps.clouds.ui.model
 
 class HourlyForecastModel(
-    sky: String,
-    highTemp: Int,
-    lowTemp: Int,
-    dewPoint: Int,
-    windSpeed: Double,
-    windDirection: String,
-    pressure: Int,
-    humidity: Int
-): ForecastModel(
-    sky, highTemp, lowTemp, dewPoint, windSpeed, windDirection, pressure, humidity
-) {
-}
+    val baseForecastModel: BaseForecastModel,
+    val temp: String = "",
+    val apparentTemp: String = ""
+) : BaseForecastModel(
+    time = baseForecastModel.time,
+    sky = baseForecastModel.sky,
+    dewPoint = baseForecastModel.dewPoint,
+    humidity = baseForecastModel.humidity,
+    pressure = baseForecastModel.pressure,
+    windSpeed = baseForecastModel.windSpeed,
+    windDirection = baseForecastModel.windDirection
+)

@@ -20,6 +20,15 @@ interface ForecastDao {
     @get:Query("SELECT * FROM daily_table")
     val daily: LiveData<List<Day>>
 
+    @Query("SELECT * FROM currently_table")
+    suspend fun getCurrently(): Currently
+
+    @Query("SELECT * FROM hour_table")
+    suspend fun getHourly(): List<Hour>
+
+    @Query("SELECT * FROM daily_table")
+    suspend fun getDaily(): List<Day>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCurrently(currently: Currently)
 
