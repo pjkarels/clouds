@@ -1,7 +1,7 @@
 package com.meadowlandapps.clouds.ui.model
 
 class HourlyForecastModel(
-    val baseForecastModel: BaseForecastModel,
+    baseForecastModel: BaseForecastModel,
     val temp: String = "",
     val apparentTemp: String = ""
 ) : BaseForecastModel(

@@ -1,7 +1,7 @@
 package com.meadowlandapps.clouds.ui.model
 
 class DailyForecastModel(
-    val baseForecastModel: BaseForecastModel,
+    baseForecastModel: BaseForecastModel,
     val highTemp: String,
     val lowTemp: String,
     val sunriseTime: String,
