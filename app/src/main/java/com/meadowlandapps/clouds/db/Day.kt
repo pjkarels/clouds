@@ -1,6 +1,8 @@
 package com.meadowlandapps.clouds.db
 
-//@Entity(tableName = "daily_table")
+import androidx.room.Entity
+
+@Entity(tableName = "daily_table")
 class Day(
     time: Long,
     summary: String,

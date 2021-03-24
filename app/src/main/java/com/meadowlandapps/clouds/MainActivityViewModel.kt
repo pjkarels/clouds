@@ -30,6 +30,8 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch {
             // insert data into database
             dao.insertCurrently(forecast.currently)
+            dao.insertHourly(forecast.hourly.data)
+            dao.insertDaily(forecast.daily.data)
         }
     }
 

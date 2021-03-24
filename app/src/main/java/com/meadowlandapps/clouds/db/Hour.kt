@@ -1,6 +1,8 @@
 package com.meadowlandapps.clouds.db
 
-//@Entity(tableName = "hour_table")
+import androidx.room.Entity
+
+@Entity(tableName = "hour_table")
 class Hour(
     time: Long,
     summary: String,
