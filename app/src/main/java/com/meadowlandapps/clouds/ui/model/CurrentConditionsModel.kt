@@ -1,15 +1,16 @@
 package com.meadowlandapps.clouds.ui.model
 
 class CurrentConditionsModel(
-    baseForecastModel: BaseForecastModel,
+    val time: String = "",
+    /**
+     * E.g. Sunny, Cloudy, Raining, etc.
+     */
+    val sky: String = "",
+    val dewPoint: String = "",
+    val windSpeed: String = "",
+    val windDirection: String = "",
+    val pressure: String = "",
+    val humidity: String = "",
     val temp: String = "",
     val apparentTemp: String = ""
-) : BaseForecastModel(
-    time = baseForecastModel.time,
-    sky = baseForecastModel.sky,
-    dewPoint = baseForecastModel.dewPoint,
-    humidity = baseForecastModel.humidity,
-    pressure = baseForecastModel.pressure,
-    windSpeed = baseForecastModel.windSpeed,
-    windDirection = baseForecastModel.windDirection
 )

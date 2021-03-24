@@ -12,7 +12,6 @@ import com.meadowlandapps.clouds.repository.ForecastRepository
 import com.meadowlandapps.clouds.ui.model.CurrentConditionsModel
 import com.meadowlandapps.clouds.ui.model.DailyForecastModel
 import com.meadowlandapps.clouds.ui.model.HourlyForecastModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.InputStreamReader
 
@@ -28,7 +27,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
             InputStreamReader(getApplication<Application>().resources.openRawResource(R.raw.forecast))
         val json = inputStreamReader.readText()
         val forecast = Gson().fromJson(json, Forecast::class.java)
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             // insert data into database
             dao.insertCurrently(forecast.currently)
         }
@@ -41,7 +40,7 @@ class MainActivityViewModel(application: Application) : AndroidViewModel(applica
     val currentConditions: LiveData<CurrentConditionsModel> = _currentConditions
 
     private val _daily = MutableLiveData<DailyForecastModel>()
-    val daily: LiveData<DailyForecastModel> = _daily
+    val daily: LiveData<DailyForecastModel> get() = _daily
 
     private val _hourly = MutableLiveData<HourlyForecastModel>()
     val hourly: LiveData<HourlyForecastModel> = _hourly

@@ -16,19 +16,19 @@ import com.meadowlandapps.clouds.windBearingToWindDirection
 class ForecastRepository(private val dao: ForecastDao) {
 
     val currentConditions = dao.currently
-    val hourlyForecast = dao.hourly
-    val dailyForecast = dao.daily
+//    val hourlyForecast = dao.hourly
+//    val dailyForecast = dao.daily
 
     suspend fun getCurrentConditions() =
         mapCurrentlyToCurrentConditionsModel(dao.getCurrently())
 
-    suspend fun getHourlyForecast() = dao.getHourly().map { hourly ->
-        mapHourlyToHourlyForecastModel(hourly)
-    }
-
-    suspend fun getDailyForecast() = dao.getDaily().map { daily ->
-        mapDailyToDailyForecastModel(daily)
-    }
+//    suspend fun getHourlyForecast() = dao.getHourly().map { hourly ->
+//        mapHourlyToHourlyForecastModel(hourly)
+//    }
+//
+//    suspend fun getDailyForecast() = dao.getDaily().map { daily ->
+//        mapDailyToDailyForecastModel(daily)
+//    }
 
     private fun mapCommonProperties(baseCondition: ConditionBase): BaseForecastModel {
         val time = baseCondition.time
@@ -58,7 +58,20 @@ class ForecastRepository(private val dao: ForecastDao) {
     }
 
     private fun mapCurrentlyToCurrentConditionsModel(currently: Currently): CurrentConditionsModel {
-        val baseForecastModel = mapCommonProperties(currently)
+        val time = currently.time
+        val sky = currently.summary
+        val dewPoint = currently.dewPoint
+        val humidity = currently.humidity
+        val pressure = currently.pressure
+        val windSpeed = currently.windSpeed
+        val windBearing = currently.windBearing
+
+        val currentTimeDisplayString = time.timeToDisplayString()
+        val dewPointDisplayString = dewPoint.toDecimalDisplayString()
+        val humidityDisplayString = humidity.toDecimalDisplayString()
+        val pressureDisplayString = pressure.toDecimalDisplayString()
+        val windSpeedDisplayString = windSpeed.toDecimalDisplayString()
+        val windDirection = windBearing.windBearingToWindDirection()
 
         val temperature = currently.temperature
         val temperatureDisplayString = temperature.toDecimalDisplayString()
@@ -66,9 +79,15 @@ class ForecastRepository(private val dao: ForecastDao) {
         val apparentTemperatureDisplayString = apparentTemperature.toDecimalDisplayString()
 
         return CurrentConditionsModel(
-            baseForecastModel,
-            "$temperatureDisplayString degrees",
-            "$apparentTemperatureDisplayString degrees"
+            time = currentTimeDisplayString,
+            sky = sky,
+            dewPoint = dewPointDisplayString,
+            humidity = humidityDisplayString,
+            pressure = pressureDisplayString,
+            windSpeed = windSpeedDisplayString,
+            windDirection = windDirection,
+            temp = "$temperatureDisplayString degrees",
+            apparentTemp = "$apparentTemperatureDisplayString degrees"
         )
     }
 

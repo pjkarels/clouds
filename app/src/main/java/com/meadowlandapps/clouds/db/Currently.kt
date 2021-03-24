@@ -1,27 +1,18 @@
 package com.meadowlandapps.clouds.db
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 @Entity(tableName = "currently_table")
 class Currently(
-    time: Long,
-    summary: String,
+    @PrimaryKey val time: Long,
+    val summary: String,
     val temperature: Double,
     val apparentTemperature: Double,
-    dewPoint: Double,
-    humidity: Double,
-    pressure: Double,
-    windSpeed: Double,
-    windBearing: Int,
-    cloudCover: Double
-) : ConditionBase(
-    time = time,
-    summary = summary,
-    dewPoint = dewPoint,
-    humidity = humidity,
-    pressure = pressure,
-    windSpeed = windSpeed,
-    windBearing = windBearing,
-    cloudCover = cloudCover
-) {
-}
+    val dewPoint: Double,
+    val humidity: Double,
+    val pressure: Double,
+    val windSpeed: Double,
+    val windBearing: Int,
+    val cloudCover: Double
+)
