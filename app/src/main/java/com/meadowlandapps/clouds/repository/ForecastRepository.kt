@@ -1,114 +1,185 @@
 package com.meadowlandapps.clouds.repository
 
-import com.meadowlandapps.clouds.db.ConditionBase
-import com.meadowlandapps.clouds.db.Currently
-import com.meadowlandapps.clouds.db.Day
-import com.meadowlandapps.clouds.db.Hour
+import android.util.Log
+import androidx.lifecycle.map
+import com.meadowlandapps.clouds.NOAAService
 import com.meadowlandapps.clouds.db.dao.ForecastDao
-import com.meadowlandapps.clouds.timeToDisplayString
-import com.meadowlandapps.clouds.toDecimalDisplayString
+import com.meadowlandapps.clouds.db.entity.Current
+import com.meadowlandapps.clouds.db.entity.Day
+import com.meadowlandapps.clouds.db.entity.Forecast
+import com.meadowlandapps.clouds.db.entity.Hour
+import com.meadowlandapps.clouds.db.entity.Point
+import com.meadowlandapps.clouds.db.entity.Weather
 import com.meadowlandapps.clouds.ui.model.BaseForecastModel
 import com.meadowlandapps.clouds.ui.model.CurrentConditionsModel
 import com.meadowlandapps.clouds.ui.model.DailyForecastModel
 import com.meadowlandapps.clouds.ui.model.HourlyForecastModel
-import com.meadowlandapps.clouds.windBearingToWindDirection
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.awaitResponse
+import retrofit2.converter.gson.GsonConverterFactory
 
 class ForecastRepository(private val dao: ForecastDao) {
 
-    val currentConditions = dao.currently
-    val hourlyForecast = dao.hourly
-    val dailyForecast = dao.daily
+    private val noaaService: NOAAService
 
-    suspend fun getCurrentConditions() =
-        mapCurrentlyToCurrentConditionsModel(dao.getCurrently())
+    init {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://api.weather.gov/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
 
-    suspend fun getHourlyForecast() = dao.getHourly().map { hourly ->
-        mapHourlyToHourlyForecastModel(hourly)
+        noaaService = retrofit.create(NOAAService::class.java)
     }
 
-    suspend fun getDailyForecast() = dao.getDaily().map { daily ->
-        mapDailyToDailyForecastModel(daily)
+    suspend fun fetchPoints(lat: Double, long: Double): Response<Point> {
+        Log.d(ForecastRepository::class.simpleName, "Fetching Points")
+        return noaaService.getPoints("points/$lat,$long").awaitResponse()
     }
 
-    private fun mapCommonProperties(baseCondition: ConditionBase): BaseForecastModel {
-        val time = baseCondition.time
-        val sky = baseCondition.summary
-        val dewPoint = baseCondition.dewPoint
-        val humidity = baseCondition.humidity
-        val pressure = baseCondition.pressure
-        val windSpeed = baseCondition.windSpeed
-        val windBearing = baseCondition.windBearing
+    suspend fun fetchForecast(url: String): Boolean {
+        Log.d(ForecastRepository::class.simpleName, "Fetching Daily Forecast")
+        val response = noaaService.getForecast(url).awaitResponse()
+        val successful = response.isSuccessful && response.body() != null
+        if (successful) {
+            Log.d(ForecastRepository::class.simpleName, "Success Fetching Daily Forecast")
+            val forecast = response.body() as Forecast
+            val weather = forecast.properties.periods[0]
+            // transform data to fit into DB schema
+            dao.insertCurrently(
+                Current(
+                    weather.number,
+                    weather.name,
+                    weather.startTime,
+                    weather.isDaytime,
+                    weather.temperature,
+                    weather.temperatureUnit,
+                    weather.windSpeed,
+                    weather.windDirection,
+                    weather.shortForecast,
+                    weather.detailedForecast,
+                    weather.icon
+                )
+            )
+            // transform data to fit into DB schema
+            val daily = forecast.properties.periods.map { dailyWeather ->
+                Day(
+                    dailyWeather.number,
+                    dailyWeather.name,
+                    dailyWeather.startTime,
+                    dailyWeather.isDaytime,
+                    dailyWeather.temperature,
+                    dailyWeather.temperatureUnit,
+                    dailyWeather.windSpeed,
+                    dailyWeather.windDirection,
+                    dailyWeather.shortForecast,
+                    dailyWeather.detailedForecast,
+                    dailyWeather.icon
+                )
+            }
+            dao.insertDaily(daily)
+        }
 
-        val currentTimeDisplayString = time.timeToDisplayString()
-        val dewPointDisplayString = dewPoint.toDecimalDisplayString()
-        val humidityDisplayString = humidity.toDecimalDisplayString()
-        val pressureDisplayString = pressure.toDecimalDisplayString()
-        val windSpeedDisplayString = windSpeed.toDecimalDisplayString()
-        val windDirection = windBearing.windBearingToWindDirection()
-
-        return BaseForecastModel(
-            sky = sky,
-            time = currentTimeDisplayString,
-            dewPoint = dewPointDisplayString,
-            humidity = humidityDisplayString,
-            pressure = pressureDisplayString,
-            windSpeed = windSpeedDisplayString,
-            windDirection = windDirection
-        )
+        return response.isSuccessful
     }
 
-    private fun mapCurrentlyToCurrentConditionsModel(currently: Currently): CurrentConditionsModel {
-        val baseModel = mapCommonProperties(currently)
+    suspend fun fetchHourlyForecast(url: String): Boolean {
+        Log.d(ForecastRepository::class.simpleName, "Fetching Hourly Forecast")
+        val response = noaaService.getForecast(url).awaitResponse()
+        val successful = response.isSuccessful && response.body() != null
+        if (successful) {
+            Log.d(ForecastRepository::class.simpleName, "Success Fetching Hourly Forecast")
+            val forecast = response.body() as Forecast
+            val hourly = forecast.properties.periods.map { hourlyWeather ->
+                Hour(
+                    hourlyWeather.number,
+                    hourlyWeather.name,
+                    hourlyWeather.startTime,
+                    hourlyWeather.isDaytime,
+                    hourlyWeather.temperature,
+                    hourlyWeather.temperatureUnit,
+                    hourlyWeather.windSpeed,
+                    hourlyWeather.windDirection,
+                    hourlyWeather.shortForecast,
+                    hourlyWeather.detailedForecast,
+                    hourlyWeather.icon
+                )
+            }
+            dao.insertHourly(hourly)
+        }
 
-        val temperature = currently.temperature
-        val temperatureDisplayString = temperature.toDecimalDisplayString()
-        val apparentTemperature = currently.apparentTemperature
-        val apparentTemperatureDisplayString = apparentTemperature.toDecimalDisplayString()
-
-        return CurrentConditionsModel(
-            time = baseModel.time,
-            sky = baseModel.sky,
-            dewPoint = baseModel.dewPoint,
-            humidity = baseModel.humidity,
-            pressure = baseModel.pressure,
-            windSpeed = baseModel.windSpeed,
-            windDirection = baseModel.windDirection,
-            temp = "$temperatureDisplayString degrees",
-            apparentTemp = "$apparentTemperatureDisplayString degrees"
-        )
+        return response.isSuccessful
     }
 
-    private fun mapHourlyToHourlyForecastModel(hourly: Hour): HourlyForecastModel {
+    val currentConditions = dao.current.map { current ->
+        mapCurrentlyToCurrentConditionsModel(current)
+    }
+
+    val hourlyForecast = dao.hourly.map { hourly ->
+        hourly.map { hour ->
+            mapHourlyToHourlyForecastModel(hour)
+        }
+    }
+
+    val dailyForecast = dao.daily.map { daily ->
+        daily.map { day ->
+            mapDailyToDailyForecastModel(day)
+        }
+    }
+
+    private fun mapHourlyToHourlyForecastModel(hourly: Hour?): HourlyForecastModel {
         val baseForecastModel = mapCommonProperties(hourly)
-
-        val temperature = hourly.temperature
-        val temperatureDisplayString = temperature.toDecimalDisplayString()
-        val apparentTemperature = hourly.apparentTemperature
-        val apparentTemperatureDisplayString = apparentTemperature.toDecimalDisplayString()
-
-        return HourlyForecastModel(
-            baseForecastModel,
-            "$temperatureDisplayString degrees",
-            "$apparentTemperatureDisplayString degrees"
-        )
+        return if (hourly == null) {
+            HourlyForecastModel(
+                baseForecastModel
+            )
+        } else {
+            HourlyForecastModel(
+                baseForecastModel,
+                hourly.startTime
+            )
+        }
     }
 
-    private fun mapDailyToDailyForecastModel(daily: Day): DailyForecastModel {
+    private fun mapDailyToDailyForecastModel(daily: Day?): DailyForecastModel {
         val baseForecastModel = mapCommonProperties(daily)
+        return if (daily == null) {
+            DailyForecastModel(
+                baseForecastModel
+            )
+        } else {
+            DailyForecastModel(
+                baseForecastModel,
+                daily.startTime
+            )
+        }
+    }
 
-        val highTemperature = daily.temperatureHigh
-        val highTemperatureDisplayString = highTemperature.toDecimalDisplayString()
-        val lowTemperature = daily.temperatureLow
-        val lowTemperatureDisplayString = lowTemperature.toDecimalDisplayString()
-        val sunriseTime = daily.sunriseTime.timeToDisplayString()
-        val sunsetTime = daily.sunsetTime.timeToDisplayString()
+    private fun mapCurrentlyToCurrentConditionsModel(current: Current?): CurrentConditionsModel {
+        val baseForecastModel = mapCommonProperties(current)
+        return if (current == null) {
+            CurrentConditionsModel(
+                baseForecastModel
+            )
+        } else {
+            CurrentConditionsModel(
+                baseForecastModel,
+                current.startTime
+            )
+        }
+    }
 
-        return DailyForecastModel(
-            baseForecastModel,
-            "$highTemperatureDisplayString degrees",
-            "$lowTemperatureDisplayString degrees",
-            sunriseTime,
-            sunsetTime
-        )
+    private fun mapCommonProperties(weather: Weather?): BaseForecastModel {
+        return if (weather == null) {
+            BaseForecastModel()
+        } else {
+            BaseForecastModel(
+                sky = weather.shortForecast,
+                temp = weather.temperature.toString(),
+                tempUnit = weather.temperatureUnit,
+                windSpeed = weather.windSpeed,
+                windDirection = weather.windDirection
+            )
+        }
     }
 }

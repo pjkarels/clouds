@@ -1,4 +1,4 @@
-package com.meadowlandapps.clouds.db
+package com.meadowlandapps.clouds.db.entity
 
 class Hourly(
     val data: ArrayList<Hour>

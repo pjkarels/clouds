@@ -5,8 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.meadowlandapps.clouds.db.dao.ForecastDao
+import com.meadowlandapps.clouds.db.entity.Current
+import com.meadowlandapps.clouds.db.entity.Day
+import com.meadowlandapps.clouds.db.entity.Hour
 
-@Database(entities = [Currently::class, Hour::class, Day::class], version = 1)
+@Database(entities = [Current::class, Hour::class, Day::class], version = 1)
 abstract class WeatherDatabase: RoomDatabase() {
 
     abstract fun forecastDao(): ForecastDao

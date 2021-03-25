@@ -1,18 +1,22 @@
 package com.meadowlandapps.clouds.ui.model
 
+import android.annotation.SuppressLint
+import java.text.SimpleDateFormat
+
 class DailyForecastModel(
-    baseForecastModel: BaseForecastModel,
-    val highTemp: String,
-    val lowTemp: String,
-    val sunriseTime: String,
-    val sunsetTime: String
+    baseForecastModel: BaseForecastModel = BaseForecastModel(),
+    val time: String = ""
 ) : BaseForecastModel(
-    time = baseForecastModel.time,
-    sky = baseForecastModel.sky,
-    dewPoint = baseForecastModel.dewPoint,
-    humidity = baseForecastModel.humidity,
-    pressure = baseForecastModel.pressure,
-    windSpeed = baseForecastModel.windSpeed,
-    windDirection = baseForecastModel.windDirection
+    baseForecastModel.sky,
+    baseForecastModel.temp,
+    baseForecastModel.tempUnit,
+    baseForecastModel.windSpeed,
+    baseForecastModel.windDirection
 ) {
+    @SuppressLint("SimpleDateFormat")
+    fun date() {
+        val dateFormatter = SimpleDateFormat("MMM d")
+        val date = dateFormatter.parse(time)
+        dateFormatter.format(date)
+    }
 }

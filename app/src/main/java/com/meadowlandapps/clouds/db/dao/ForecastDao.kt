@@ -5,32 +5,32 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.meadowlandapps.clouds.db.Currently
-import com.meadowlandapps.clouds.db.Day
-import com.meadowlandapps.clouds.db.Hour
+import com.meadowlandapps.clouds.db.entity.Current
+import com.meadowlandapps.clouds.db.entity.Day
+import com.meadowlandapps.clouds.db.entity.Hour
 
 @Dao
 interface ForecastDao {
-    @get:Query("SELECT * FROM currently_table")
-    val currently: LiveData<Currently>
+    @get:Query("SELECT * FROM current_table")
+    val current: LiveData<Current>
 
     @get:Query("SELECT * FROM hour_table")
     val hourly: LiveData<List<Hour>>
 
-    @get:Query("SELECT * FROM daily_table")
+    @get:Query("SELECT * FROM day_table")
     val daily: LiveData<List<Day>>
 
-    @Query("SELECT * FROM currently_table")
-    suspend fun getCurrently(): Currently
+    @Query("SELECT * FROM current_table")
+    suspend fun getCurrently(): Current
 
     @Query("SELECT * FROM hour_table")
     suspend fun getHourly(): List<Hour>
 
-    @Query("SELECT * FROM daily_table")
+    @Query("SELECT * FROM day_table")
     suspend fun getDaily(): List<Day>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertCurrently(currently: Currently)
+    suspend fun insertCurrently(current: Current)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertHourly(hours: List<Hour>)
